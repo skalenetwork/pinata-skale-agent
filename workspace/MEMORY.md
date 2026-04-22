@@ -1,5 +1,89 @@
 # MEMORY.md - Long-Term Memory
 
+## BITE V1 Executor Script (2026-04-22 15:44 UTC)
+
+**Status:** ✅ Created & Tested — Scalable, contract-agnostic BITE V1 encrypted transaction executor
+
+### First Successful Encrypted Transaction (2026-04-22 15:44 UTC)
+
+**Mint via BITE V1 on NFT_Test:**
+- **Hash:** `0x692c54ff69517c0db687319e066ba74568cd75d2934a897800b48cdd7c66c633`
+- **Contract:** NFT_Test (`0x3EA415d43e5ad81E05954193600Cb187B9B96F85`)
+- **Function:** `mint()` (encrypted)
+- **Block:** 1601301
+- **Status:** ✅ Success
+- **Gas:** 86,036 units
+- **Explorer:** https://skale-base-explorer.skalenodes.com/tx/0x692c54ff69517c0db687319e066ba74568cd75d2934a897800b48cdd7c66c633
+
+**Encryption Details:**
+- `to` address encrypted via BITE V1 threshold encryption
+- `data` (mint calldata) encrypted
+- Transaction hidden from mempool observers until execution
+- Decrypted by validator committee after finality
+- Zero MEV risk
+
+### Scripts Created
+
+1. **`bite-executor.js`** — Core BITE V1 executor (production-ready)
+   - Location: `/home/node/clawd/workspace/bite-executor.js`
+   - Purpose: Universal script for ANY contract function via BITE V1
+   - Features: CLI-driven, OWS signing, auto gas estimation, chain-agnostic
+   - Chains: `skale-base`, `skale-base-sepolia`
+   - No duplication — one script, all contracts
+
+2. **`bite-freemint-mint.sh`** — FreeMint mint() wrapper
+   - Location: `/home/node/clawd/workspace/bite-freemint-mint.sh`
+   - Purpose: Quick reference for FreeMint.mint() via BITE V1
+   - Usage: `bash bite-freemint-mint.sh`
+
+### Documentation
+
+- **File:** `/home/node/clawd/workspace/BITE_V1_EXECUTOR_README.md`
+- **Content:** Complete usage guide, examples, troubleshooting, wrapper patterns
+
+### Quick Usage
+
+**FreeMint mint() on SKALE Base:**
+```bash
+node bite-executor.js --contract 0x3b3475C987796c2880ecb60c6EcD5dFAf8d81fBf --function mint --chain skale-base
+```
+
+**Any contract function:**
+```bash
+node bite-executor.js --contract 0x... --function <name> --chain <chain> --args '[...]' --abi ./abi.json
+```
+
+### Key Features
+
+- ✅ Contract-agnostic (works with any contract, any function)
+- ✅ OWS wallet integration (no private key exposure)
+- ✅ Built-in ABIs for common functions (mint, transfer, approve)
+- ✅ Custom ABI support for specialized functions
+- ✅ Manual gas estimation (BITE requirement)
+- ✅ Testnet & mainnet support
+- ✅ Full encryption via BITE V1 (to + data encrypted)
+- ✅ Detailed logging & explorer links
+- ✅ Wrapper-friendly design (easy bash wrappers)
+
+### BITE V1 Encryption
+
+- **Encrypted:** `to` address + `data` (calldata)
+- **Public:** sender, value, gas used
+- **Manual Gas:** Set via `--gas` (default 300k)
+- **Signing:** Always OWS wallet (default: skale-default)
+
+### To Use with Other Contracts
+
+Follow the pattern in README:
+1. Get contract address & function name
+2. Determine function arguments (check ABI if needed)
+3. Run `bite-executor.js` with `--contract`, `--function`, `--args`
+4. Optionally create a bash wrapper like `bite-freemint-mint.sh`
+
+**No need to create separate scripts** — just change CLI args!
+
+---
+
 ## Xona x402 AI Content Generation (2026-04-22 15:19 UTC)
 
 **Status:** ✅ Created & Tested — Scalable x402 Xona client for SKALE Base image/video generation
