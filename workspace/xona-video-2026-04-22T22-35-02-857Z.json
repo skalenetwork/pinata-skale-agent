@@ -1,0 +1,14 @@
+{
+  "video_url": "https://provey-media.sgp1.cdn.digitaloceanspaces.com/generated/grok-video-0bd67b57-ee9e-414b-ab40-49d15d616618-1776897301390.mp4",
+  "thumbnail_url": "https://provey-media.sgp1.cdn.digitaloceanspaces.com/generated/grok-video-0bd67b57-ee9e-414b-ab40-49d15d616618-1776897301390.jpg",
+  "duration": 10,
+  "model": "grok-imagine-video",
+  "metadata": {
+    "request_id": "3feecb7f-e130-986a-1369-caef17cbb3d9",
+    "prompt": "a tiger playing the piano and smoking a cigar",
+    "poll_attempts": 36,
+    "has_input_image": false,
+    "cdn_key": "generated/grok-video-0bd67b57-ee9e-414b-ab40-49d15d616618-1776897301390.mp4",
+    "grok_url": "https://vidgen.x.ai/xai-vidgen-bucket/xai-video-71f9de93-7bde-41c6-9039-dfd9cf181281.mp4"
+  }
+}
