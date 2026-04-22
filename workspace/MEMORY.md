@@ -1,5 +1,64 @@
 # MEMORY.md - Long-Term Memory
 
+## MTM (Multi-Transaction Mode) Executor Script (2026-04-22 14:53 UTC)
+
+**Status:** ✅ Created & Tested — Generic MTM script for high-throughput batch execution
+
+### Script Details
+- **Name:** `mtm-executor.js`
+- **Location:** `/home/node/clawd/workspace/mtm-executor.js`
+- **Wrapper:** `/home/node/clawd/workspace/run-mtm-mint.sh`
+- **Purpose:** Generic script to execute any contract function x times using manual nonce management
+- **Throughput:** Supports up to 700 TPS on SKALE Base (MTM enabled)
+
+### Features
+- ✅ CLI arguments: `--contract`, `--function`, `--count`, `--args`, `--abi`, `--rpc`
+- ✅ Manual nonce management for parallel transaction execution
+- ✅ Support for custom function arguments via JSON
+- ✅ Custom ABI loading from file
+- ✅ Transaction result reporting with TPS calculation
+- ✅ Error handling with summary statistics
+
+### Usage Examples
+
+```bash
+# Mint NFT 10 times (no args)
+bash /home/node/clawd/workspace/run-mtm-mint.sh
+
+# Generic execution (set PRIVATE_KEY first)
+export PRIVATE_KEY=$(ows wallet export --wallet "skale-default")
+node mtm-executor.js --contract 0x123... --function transfer --count 5 --args '["0xABC...",1000000000]'
+
+# With custom ABI
+node mtm-executor.js --contract 0x123... --function swap --count 20 --abi ./abi.json --args '[...]'
+```
+
+### First Test: NFT_Test Batch Mint (10x)
+
+**Execution Details:**
+- **Contract:** `0x3EA415d43e5ad81E05954193600Cb187B9B96F85` (NFT_Test)
+- **Function:** `mint()`
+- **Executions:** 10
+- **Time:** 0.65 seconds
+- **Throughput:** 15.38 TPS
+- **Status:** ✅ All 10 transactions sent successfully
+
+**Transaction Hashes:**
+1. `0x4779ddb4dbfe26e31bf85ce2afa332bf02e145d07b9e3f4b994d0c940d0615d3`
+2. `0x212028bec1447d34b98e6edbcf26e7731876bb7a90a548e5ce32989726c1fe09`
+3. `0x6af42894469603ceb7f5338f1410953c9b0952123b49417fa4e2332a7cd33937`
+4. `0xbacd7c21eb0152ae5d09013da47450c3077aaf043915565fa94a537fbb0b07a9`
+5. `0xbddfd2395c1748f5747bece43a56b5596f913e3fe0f06a1eaea8b786d8c9dedf`
+6. `0x803d30a9d864151d07fc4df82afa5ade8048a00c3b9f0c7e3e6070029e9b35d9`
+7. `0x4e8e5f40692676f684e3f57df4ce01e8e54ba8cd301ae2afec3544e2dc9877bb`
+8. `0x15ec09ff455af774d3f1e5a57a103bff0b75fc80498f4fdf78b74d8266103312`
+9. `0xdeb494650c5db345b056383cae407b46f529a679d35c9998dbf4237cb862c0fe`
+10. `0x92b7652c573c93a0fa0c9dbd36b03a1b30e7bc505e3d2050d275b0cc9a2172c9`
+
+**Explorer Link:** https://skale-base-explorer.skalenodes.com/address/0xb50CdEBc05b11574610739f3aCfA1f1DDe1e8A29
+
+---
+
 ## NFT_Test ERC-721 Contract Deployment (2026-04-22 14:51 UTC)
 
 **Status:** ✅ Successfully deployed & verified on SKALE Base mainnet
