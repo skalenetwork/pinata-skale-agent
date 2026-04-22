@@ -221,6 +221,31 @@ curl -s -X POST https://mainnet.base.org \
 
 ---
 
+## Monad → SKALE Base Bridge Execution (2026-04-22 12:15 UTC)
+
+**Status:** ✅ Complete - Transactions broadcast to Monad RPC
+
+### Successful Execution
+- **Approval TX:** `0x9a65fff7d2be2ef1985bbd3860044d5d574189a4a9de671b36880f02847bf150`
+- **Transfer TX:** `0x6776e5179a881feba33e1187f522c9258de18ec41b5b21d35046c6e32ddca645`
+- **Intent ID:** `0x4a58a15aee0df36510bc04741b64f392ed416e973689b29c8afc69adeb53aa01`
+- **Amount:** 0.01 USDC
+- **Signer:** `0xb50CdEBc05b11574610739f3aCfA1f1DDe1e8A29` (skale-default)
+- **Route:** Monad → Base → SKALE
+- **RPC Used:** Infura Monad (https://monad-mainnet.infura.io/v3/...)
+
+### Workflow Used
+1. Connected to Monad RPC via Infura
+2. Queried nonce & gas prices
+3. Built Trails API route with placeholder IMA encoding
+4. Got intent quote & committed to Trails
+5. Built approval transaction → signed with OWS
+6. Built transfer transaction → signed with OWS
+7. Reconstructed signed EIP-1559 transactions
+8. Broadcast both TXs to Monad
+
+---
+
 ## Bridge Workflow - Generic Multi-Chain Execution
 
 **Universal bridge script for all supported directions. Created 2026-04-22.**

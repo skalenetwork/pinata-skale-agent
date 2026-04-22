@@ -1,5 +1,9 @@
 {
   "devDependencies": {
     "ethers": "^6.16.0"
+  },
+  "dependencies": {
+    "@0xtrails/api": "^0.13.2",
+    "viem": "^2.48.4"
   }
 }
