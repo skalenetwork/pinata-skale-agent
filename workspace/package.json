@@ -4,6 +4,8 @@
   },
   "dependencies": {
     "@0xtrails/api": "^0.13.2",
+    "bip39": "^3.1.0",
+    "ethereumjs-wallet": "^1.0.2",
     "viem": "^2.48.4"
   }
 }

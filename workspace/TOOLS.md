@@ -65,6 +65,86 @@ Add whatever helps you do your job. This is your cheat sheet.
 
 ---
 
+## SKALE Contracts Foundry Project
+
+### Project Location
+- **Folder:** `/home/node/clawd/workspace/skale-contracts`
+- **Status:** ✅ Ready for development
+- **Configuration:** Solidity 0.8.24, EVM Istanbul, SKALE endpoints configured
+- **Wallet:** `skale-default` (OWS)
+
+### ⭐ Contract Verification Pattern
+
+**ALWAYS use this pattern after deployment:**
+
+```bash
+forge verify-contract \
+ --rpc-url <chain_rpc> \
+ <contract_address> \
+ src/<contract_name_file>.sol:<contract_name> \
+ --verifier blockscout \
+ --verifier-url <explorer_base_url>/api
+```
+
+**Quick Reference:**
+- **Mainnet RPC:** `https://skale-base.skalenodes.com/v1/base`
+- **Testnet RPC:** `https://base-sepolia-testnet.skalenodes.com/v1/jubilant-horrible-ancha`
+- **Mainnet Explorer API:** `https://skale-base-explorer.skalenodes.com/api`
+- **Testnet Explorer API:** `https://base-sepolia-testnet-explorer.skalenodes.com/api`
+
+**Example:**
+```bash
+forge verify-contract \
+ --rpc-url https://skale-base.skalenodes.com/v1/base \
+ 0x3b3475C987796c2880ecb60c6EcD5dFAf8d81fBf \
+ src/FreeMint.sol:FreeMint \
+ --verifier blockscout \
+ --verifier-url https://skale-base-explorer.skalenodes.com/api
+```
+
+### Quick Deploy Workflow
+```bash
+# 1. Export private key from OWS wallet
+export PRIVATE_KEY=$(ows wallet export --wallet "skale-default")
+
+# 2. Deploy to testnet
+cd /home/node/clawd/workspace/skale-contracts
+forge script script/Deploy.s.sol \
+  --rpc-url skale_base_sepolia \
+  --private-key $PRIVATE_KEY \
+  --legacy \
+  --broadcast
+
+# 3. Verify on testnet (copy contract address from broadcast output)
+forge verify-contract \
+ --rpc-url https://base-sepolia-testnet.skalenodes.com/v1/jubilant-horrible-ancha \
+ <CONTRACT_ADDRESS> \
+ src/ContractFile.sol:ContractName \
+ --verifier blockscout \
+ --verifier-url https://base-sepolia-testnet-explorer.skalenodes.com/api
+
+# 4. Clean up
+unset PRIVATE_KEY
+```
+
+### Project Structure
+- `src/` — Smart contract source files
+- `script/Deploy.s.sol` — Deployment script template (edit for your contracts)
+- `test/` — Test files
+- `foundry.toml` — Pre-configured for SKALE Base & Sepolia
+- `.env.example` — Environment variable template
+- `README.md` — Setup and deployment guide
+
+### Important
+- **Always use this project folder** for all contract deployments (unless explicitly told otherwise)
+- **Test on Sepolia first** before mainnet deployment
+- **ALWAYS verify contracts after deployment** using the Blockscout pattern above
+- **Set EVM to Istanbul** (already done in foundry.toml)
+- **Use --legacy flag** (required for SKALE)
+- **No EIP-1559** (SKALE uses legacy transactions only)
+
+---
+
 ## SKALE Bridge Script
 
 ### Universal Bridge Execution (OWS Signing)

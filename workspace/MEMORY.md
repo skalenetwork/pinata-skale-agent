@@ -1,5 +1,42 @@
 # MEMORY.md - Long-Term Memory
 
+## NFT_Test ERC-721 Contract Deployment (2026-04-22 14:51 UTC)
+
+**Status:** ✅ Successfully deployed & verified on SKALE Base mainnet
+
+### Contract Details
+- **Name:** NFT_Test
+- **Symbol:** NFTT
+- **Address:** `0x3EA415d43e5ad81E05954193600Cb187B9B96F85`
+- **Network:** SKALE Base Mainnet (Chain ID: 1187947933)
+- **Transaction:** `0xd5c9e0d1ee390f3c24621665672a0797dd633dede0f9bcfa14361a6a32cf3d69`
+- **Block:** 1600965
+- **Signer:** `0xb50CdEBc05b11574610739f3aCfA1f1DDe1e8A29` (skale-default wallet)
+
+### Features
+- ✅ Open `mint()` function — anyone can mint 1 NFT at a time
+- ✅ Simple sequential token IDs (0, 1, 2, ...)
+- ✅ Standard ERC-721 transfers, approvals
+- ✅ `getTotalMinted()` helper function
+- ✅ Full ERC-721 standard compliance
+- ✅ Zero gas fees for users (SKALE model)
+
+### Verification
+- **Status:** ✅ Verified on Blockscout
+- **Verification URL:** https://skale-base-explorer.skalenodes.com/address/0x3ea415d43e5ad81e05954193600cb187b9b96f85
+- **Method:** Forge + Blockscout verifier
+
+### Source Code
+- **File:** `/home/node/clawd/workspace/skale-contracts/src/NFT_Test.sol`
+- **Deployment script:** `/home/node/clawd/workspace/skale-contracts/script/Deploy.s.sol`
+
+### Gas Usage
+- **Total Gas:** 2,393,579 gas
+- **Gas Price:** 47.61904762 gwei
+- **Total Cost:** 0.11397995238323198 ETH (CREDIT on SKALE)
+
+---
+
 ## RandomMint ERC-721 Contract Deployment (2026-04-22 14:56 UTC)
 
 **Status:** ✅ Successfully deployed to SKALE Base mainnet
