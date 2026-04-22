@@ -1,5 +1,62 @@
 # MEMORY.md - Long-Term Memory
 
+## SKALEAgentNFT ERC-721 Contract Deployment (2026-04-22 17:55 UTC)
+
+**Status:** ✅ Successfully deployed to SKALE Base Sepolia testnet
+
+### Contract Details
+- **Name:** SKALEAgentNFT
+- **Symbol:** SANFT
+- **Type:** ERC-721 with SKALE native RNG
+- **Address (Testnet):** `0x41395943EE2Aab294E214Ea45e6e9323559a7688`
+- **Network:** SKALE Base Sepolia (Chain ID: 324705682)
+- **Testnet Explorer:** https://base-sepolia-testnet-explorer.skalenodes.com/address/0x41395943EE2Aab294E214Ea45e6e9323559a7688
+
+### Key Features
+- ✅ **Open mint()** — Anyone can call, no access control
+- ✅ **SKALE native RNG** — Uses precompile at 0x18 to generate 1-5 tokens per mint
+- ✅ **Signer is Receiver** — msg.sender receives all tokens minted
+- ✅ **batchMint(count)** — Batch up to 100 mints in one transaction (MTM support)
+- ✅ **getRandom()** — Public function to get SKALE native random numbers
+- ✅ **getTotalMinted()** — View function to check total tokens minted
+- ✅ **Zero gas fees** — Users pay nothing on SKALE Base
+
+### Source Code
+- **File:** `/home/node/clawd/workspace/skale-contracts/src/SKALEAgentNFT.sol`
+- **Deployment script:** `/home/node/clawd/workspace/skale-contracts/script/Deploy.s.sol`
+
+### Mainnet Status
+- Attempted deployment to SKALE Base mainnet
+- Contract was compiled and generated, but insufficient CREDIT balance for deployment gas
+- Can deploy to mainnet after funding wallet with additional CREDIT
+
+### How It Works
+1. User calls `mint()` function
+2. Contract calls SKALE native RNG precompile
+3. Random number modulo 5 gives range 0-4
+4. Add 1 to get range 1-5
+5. Contract mints that many tokens to msg.sender
+6. Event emitted with mint count
+
+### Testnet Testing
+```bash
+# Mint 1-5 random NFTs
+cast send 0x41395943EE2Aab294E214Ea45e6e9323559a7688 "mint()" \
+  --rpc-url https://base-sepolia-testnet.skalenodes.com/v1/jubilant-horrible-ancha \
+  --private-key <your_key>
+
+# Batch mint 10 times
+cast send 0x41395943EE2Aab294E214Ea45e6e9323559a7688 "batchMint(uint256)" 10 \
+  --rpc-url https://base-sepolia-testnet.skalenodes.com/v1/jubilant-horrible-ancha \
+  --private-key <your_key>
+
+# Check total minted
+cast call 0x41395943EE2Aab294E214Ea45e6e9323559a7688 "getTotalMinted()" \
+  --rpc-url https://base-sepolia-testnet.skalenodes.com/v1/jubilant-horrible-ancha
+```
+
+---
+
 ## BITE V1 Executor Script (2026-04-22 15:44 UTC)
 
 **Status:** ✅ Created & Tested — Scalable, contract-agnostic BITE V1 encrypted transaction executor
