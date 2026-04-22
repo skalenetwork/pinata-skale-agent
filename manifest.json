@@ -15,10 +15,6 @@
     {
       "cid": "bafybeifhfeehrsn6ln6lku6xsrsathafhig5brkvdyej5qekd76ekk7ooe",
       "name": "SKALE-Bridge"
-    },
-    {
-      "cid": "bafybeicheo6xwjjfr5ulyhm5ymnoadnu47ovm5gghgfdscowhpupjubqw4",
-      "name": "SKALE-Deploy"
     }
   ],
   "secrets": [
