@@ -1,0 +1,11 @@
+{
+  "image_url": "https://provey-media.sgp1.cdn.digitaloceanspaces.com/generated/grok-ebe0c44d-afed-4899-9549-55d9fb7de55c-1776871642263.jpg",
+  "image_description": "a frog jumping on some rocks of a pond",
+  "metadata": {
+    "model": "grok-imagine-image",
+    "endpoint_used": "/images/generations",
+    "original_prompt_length": 38,
+    "cdn_key": "generated/grok-ebe0c44d-afed-4899-9549-55d9fb7de55c-1776871642263.jpg",
+    "grok_url": "https://imgen.x.ai/xai-imgen/xai-tmp-imgen-cf45cde6-2b52-47d6-b242-f728660f927b.jpeg"
+  }
+}

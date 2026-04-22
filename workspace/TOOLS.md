@@ -187,6 +187,56 @@ bash run-mtm-mint.sh
 
 ---
 
+## Xona AI Content Generation (x402 SKALE Base)
+
+### Scripts
+- **Main Script:** `/home/node/clawd/workspace/xona-generate.js` (recommended for users)
+- **Core Library:** `/home/node/clawd/workspace/xona-x402-client.js` (for advanced use)
+
+### When User Requests Xona
+
+**ALWAYS:**
+1. Show available models with pricing
+2. Ask user which model they prefer (recommend grok-imagine for best value at $0.04)
+3. Confirm exact USDC cost
+4. Get explicit approval before running
+5. Execute with: `node xona-generate.js image <model> "<prompt>"`
+
+### Model Selection Guide
+
+**Budget-Conscious ($0.03-$0.05):**
+- `creative-director` ($0.03) — Prompt refinement & research
+- `grok-imagine` ($0.04) — ⭐ Best value, excellent quality
+- `qwen-image` ($0.05) — Balanced quality
+
+**Standard ($0.08-$0.10):**
+- `designer` ($0.08) — Style blending, artistic control
+- `seedream-4.5` ($0.08) — Advanced ByteDance model
+- `nano-banana` ($0.10) — Fast generation
+
+**Premium ($0.20+):**
+- `nano-banana-pro` ($0.20) — Highest quality output
+
+**Video ($0.50):**
+- `short-generation` ($0.50) — 10-second video clips
+
+### Examples
+
+```bash
+# Ask user first, then execute:
+node xona-generate.js image grok-imagine "A sunset over mountains"
+node xona-generate.js image designer "A magical forest with watercolor style"
+node xona-generate.js video "Dragons flying through clouds"
+```
+
+### Key Points
+- All payments via x402 on SKALE Base (OWS wallet)
+- Sub-cent transaction costs
+- No subscriptions — pure pay-per-use
+- Results saved to JSON file for reference
+
+---
+
 ## SKALE Bridge Script
 
 ### Universal Bridge Execution (OWS Signing)

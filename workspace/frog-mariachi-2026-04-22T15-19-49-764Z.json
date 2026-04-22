@@ -1,0 +1,11 @@
+{
+  "image_url": "https://provey-media.sgp1.cdn.digitaloceanspaces.com/generated/grok-872dee4b-2a6e-48e8-82d0-953d0e68c551-1776871187281.jpg",
+  "image_description": "A whimsical, cartoonish frog dressed as a Mexican mariachi musician, wearing a vibrant embroidered sombrero, playing an acoustic guitar, colorful traditional outfit with golden embroidery, festive and joyful atmosphere, professional illustration style",
+  "metadata": {
+    "model": "grok-imagine-image",
+    "endpoint_used": "/images/generations",
+    "original_prompt_length": 251,
+    "cdn_key": "generated/grok-872dee4b-2a6e-48e8-82d0-953d0e68c551-1776871187281.jpg",
+    "grok_url": "https://imgen.x.ai/xai-imgen/xai-tmp-imgen-61cd99d8-cbe4-4fb1-a150-738ca6cb3851.jpeg"
+  }
+}
