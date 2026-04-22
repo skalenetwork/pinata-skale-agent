@@ -1,6 +1,37 @@
 # MEMORY.md - Long-Term Memory
 
-## SKALEAgentNFT ERC-721 Contract Deployment (2026-04-22 17:55 UTC)
+## SKALEAgentNFT ERC-721 Contract Deployment - MAINNET (2026-04-22 18:02 UTC)
+
+**Status:** ✅ Successfully deployed to SKALE Base mainnet
+
+### Contract Details
+- **Name:** SKALEAgentNFT
+- **Symbol:** SANFT
+- **Type:** ERC-721 with SKALE native RNG
+- **Address (Mainnet):** `0x843bCBFceC86574b380CD90c77BF9D4F647fA17d`
+- **Network:** SKALE Base Mainnet (Chain ID: 1187947933)
+- **Mainnet Explorer:** https://skale-base-explorer.skalenodes.com/address/0x843bcbfcec86574b380cd90c77bf9d4f647fa17d
+- **Verification:** ✅ Verified on Blockscout
+
+### Key Features
+- ✅ **Open mint()** — Anyone can call, no access control
+- ✅ **SKALE native RNG** — Uses precompile at 0x18 to generate 1-5 tokens per mint
+- ✅ **Signer is Receiver** — msg.sender receives all tokens minted
+- ✅ **batchMint(count)** — Batch up to 100 mints in one transaction (MTM support)
+- ✅ **getRandom()** — Public function to get SKALE native random numbers
+- ✅ **getTotalMinted()** — View function to check total tokens minted
+- ✅ **Zero gas fees** — Users pay nothing on SKALE Base
+
+### How to Mint
+```bash
+cast send 0x843bCBFceC86574b380CD90c77BF9D4F647fA17d "mint()" \
+  --rpc-url https://skale-base.skalenodes.com/v1/base \
+  --private-key <your_key>
+```
+
+---
+
+## SKALEAgentNFT ERC-721 Contract Deployment - TESTNET (2026-04-22 17:55 UTC)
 
 **Status:** ✅ Successfully deployed to SKALE Base Sepolia testnet
 
