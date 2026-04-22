@@ -24,7 +24,7 @@ import { execSync } from 'child_process';
 
 const CHAIN_MAP = {
   base: { id: 8453, name: 'Base', rpc: 'https://mainnet.base.org' },
-  polygon: { id: 137, name: 'Polygon', rpc: 'https://polygon-rpc.com' },
+  polygon: { id: 137, name: 'Polygon', rpc: 'https://polygon-bor-rpc.publicnode.com' },
   optimism: { id: 10, name: 'Optimism', rpc: 'https://mainnet.optimism.io' },
   arbitrum: { id: 42161, name: 'Arbitrum', rpc: 'https://arb1.arbitrum.io/rpc' },
   avalanche: { id: 43114, name: 'Avalanche', rpc: 'https://api.avax.network/ext/bc/C/rpc' },
