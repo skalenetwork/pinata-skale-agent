@@ -1,4 +1,4 @@
-import { TrailsApi } from '@0xtrails/api';
+import { TrailsApi, RouteProvider } from '@0xtrails/api';
 import { createWalletClient, createPublicClient, http, encodeFunctionData } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { base, polygon, optimism, arbitrum, avalanche } from 'viem/chains';
@@ -13,7 +13,7 @@ const CHAIN_MAP = {
   optimism: { id: 10, chain: optimism, name: 'Optimism' },
   arbitrum: { id: 42161, chain: arbitrum, name: 'Arbitrum' },
   avalanche: { id: 43114, chain: avalanche, name: 'Avalanche' },
-  monad: { id: 143, chain: { id: 143, name: 'Monad', nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 }, rpcUrls: { default: { http: ['https://mainnet.monadbtc.com'] } } }, name: 'Monad' },
+  monad: { id: 143, chain: { id: 143, name: 'Monad', nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 }, rpcUrls: { default: { http: ['https://monad-mainnet.infura.io/v3/a90b0b1fcbf94ad3868db4b2b27024cb'] } } }, name: 'Monad' },
   'skale-base': { id: 1187947933, chain: { id: 1187947933, name: 'SKALE Base', nativeCurrency: { name: 'Credits', symbol: 'CREDIT', decimals: 18 }, rpcUrls: { default: { http: ['https://skale-base.skalenodes.com/v1/base'] } } }, name: 'SKALE Base' }
 };
 
@@ -234,7 +234,10 @@ async function bridgeToSKALE() {
     destinationCallData,
     slippageTolerance: 0.005,
     destinationCallValue: '0',
-    tradeType: 'EXACT_INPUT'
+    tradeType: 'EXACT_INPUT',
+    options: {
+      bridgeProvider: RouteProvider.AUTO,
+    },
   });
 
   const intentId = quote.intent.intentId;
