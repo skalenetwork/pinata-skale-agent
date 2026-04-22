@@ -62,3 +62,45 @@ Add whatever helps you do your job. This is your cheat sheet.
 - Nano: `nano_3izrg7choha7u9ub9cef9be8okcio7q35fhfpku6uinw3gwysxubrdxckx5s`
 
 **⚠️ BACKUP:** Mnemonic phrase (24 words) was displayed at creation. Store securely offline. Will not be shown again.
+
+---
+
+## SKALE Bridge Script
+
+### Universal Bridge Execution (OWS Signing)
+
+**Script:** `/home/node/clawd/workspace/bridge-execution-generic.js`
+
+**Quick Start:**
+```bash
+# Bridge 0.01 USDC from Monad to SKALE Base
+node bridge-execution-generic.js --from monad --to skale-base --amount 10000
+
+# Bridge 0.05 USDC from Polygon to SKALE Base
+node bridge-execution-generic.js --from polygon --to skale-base --amount 50000
+
+# Bridge with custom recipient
+node bridge-execution-generic.js --from base --to skale-base --amount 10000 --recipient 0x...
+```
+
+**Supported Chains:**
+- Origin: `base`, `polygon`, `optimism`, `arbitrum`, `avalanche`, `monad`
+- Destination: `skale-base` (or `base` from skale-base)
+
+**Signing:**
+- Uses `skale-default` wallet by default (OWS)
+- Private key never exposed (encrypted at rest)
+- Configured via: `OWS_WALLET=<name>` (optional env var)
+
+**Environment:**
+- `TRAILS_API_KEY` - Required (already in OpenClaw config)
+- `OWS_WALLET` - Optional (defaults to `skale-default`)
+
+**What it does:**
+1. Checks allowance, approves if needed (OWS signed)
+2. Builds & signs transfer TX (OWS signed)
+3. Broadcasts both to origin chain RPC
+4. Executes Trails API intent
+5. Waits for bridge completion (5-10 minutes)
+
+**No private keys. No questions. Always use this script for bridging.**
