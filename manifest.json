@@ -11,6 +11,10 @@
     {
       "cid": "bafybeifn2osv7hcvj6adxudaoleqmc767et2webau2fszydzpitvc3obam",
       "name": "ows"
+    },
+    {
+      "cid": "bafybeifhfeehrsn6ln6lku6xsrsathafhig5brkvdyej5qekd76ekk7ooe",
+      "name": "SKALE-Bridge"
     }
   ],
   "secrets": [
