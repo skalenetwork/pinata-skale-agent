@@ -1,20 +1,35 @@
+#!/usr/bin/env node
+
+/**
+ * Universal SKALE Bridge Execution Script
+ * 
+ * Supports bridging between any EVM chains and SKALE Base
+ * Uses OWS (Open Wallet Standard) for secure key management
+ * 
+ * Usage:
+ *   node bridge-execution-generic.js --from monad --to skale-base --amount 10000
+ * 
+ * Environment:
+ *   OWS_WALLET=<name> (default: skale-default)
+ *   TRAILS_API_KEY (required)
+ */
+
 import { TrailsApi, RouteProvider } from '@0xtrails/api';
-import { createWalletClient, createPublicClient, http, encodeFunctionData } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
-import { base, polygon, optimism, arbitrum, avalanche } from 'viem/chains';
+import { createPublicClient, http, encodeFunctionData, serializeTransaction } from 'viem';
+import { execSync } from 'child_process';
 
 // ============================================================================
 // CONFIGURATION - All supported chains and USDC addresses
 // ============================================================================
 
 const CHAIN_MAP = {
-  base: { id: 8453, chain: base, name: 'Base' },
-  polygon: { id: 137, chain: polygon, name: 'Polygon' },
-  optimism: { id: 10, chain: optimism, name: 'Optimism' },
-  arbitrum: { id: 42161, chain: arbitrum, name: 'Arbitrum' },
-  avalanche: { id: 43114, chain: avalanche, name: 'Avalanche' },
-  monad: { id: 143, chain: { id: 143, name: 'Monad', nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 }, rpcUrls: { default: { http: ['https://monad-mainnet.infura.io/v3/a90b0b1fcbf94ad3868db4b2b27024cb'] } } }, name: 'Monad' },
-  'skale-base': { id: 1187947933, chain: { id: 1187947933, name: 'SKALE Base', nativeCurrency: { name: 'Credits', symbol: 'CREDIT', decimals: 18 }, rpcUrls: { default: { http: ['https://skale-base.skalenodes.com/v1/base'] } } }, name: 'SKALE Base' }
+  base: { id: 8453, name: 'Base', rpc: 'https://mainnet.base.org' },
+  polygon: { id: 137, name: 'Polygon', rpc: 'https://polygon-rpc.com' },
+  optimism: { id: 10, name: 'Optimism', rpc: 'https://mainnet.optimism.io' },
+  arbitrum: { id: 42161, name: 'Arbitrum', rpc: 'https://arb1.arbitrum.io/rpc' },
+  avalanche: { id: 43114, name: 'Avalanche', rpc: 'https://api.avax.network/ext/bc/C/rpc' },
+  monad: { id: 143, name: 'Monad', rpc: 'https://monad-mainnet.infura.io/v3/a90b0b1fcbf94ad3868db4b2b27024cb' },
+  'skale-base': { id: 1187947933, name: 'SKALE Base', rpc: 'https://skale-base.skalenodes.com/v1/base' }
 };
 
 const USDC_ADDRESSES = {
@@ -28,39 +43,170 @@ const USDC_ADDRESSES = {
   1187947933: '0x85889c8c714505E0c94b30fcfcF64fE3Ac8FCb20'   // SKALE Base
 };
 
-// IMA and Trails Router contracts
 const IMA_DEPOSIT_BOX = '0x7f54e52D08C911eAbB4fDF00Ad36ccf07F867F61';
 const TRAILS_ROUTER = '0xBaE357CBAA04a68cbfD5a560Ab06C4E9A3328A90';
 const BASE_USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 const SKALE_CHAIN_NAME = 'winged-bubbly-grumium';
 
-// Community Pool (for SKALE → Base)
-const COMMUNITY_POOL = '0x7153b03C04E0DeeDB24FD745F6765C676E33330c';
-const COMMUNITY_LOCKER = '0xD2aaa00300000000000000000000000000000000';
-const TOKEN_MANAGER_ERC20 = '0xD2aAA00500000000000000000000000000000000';
-const SKALE_USDC = '0x85889c8c714505E0c94b30fcfcF64fE3Ac8FCb20';
+const PLACEHOLDER = 0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefn;
 
 // ============================================================================
-// PARAMETER PARSING
+// HELPERS
+// ============================================================================
+
+function encodeDepositERC20Direct(schainName, tokenAddress, amount, receiver) {
+  return encodeFunctionData({
+    abi: [{
+      inputs: [
+        { internalType: 'string', name: 'schainName', type: 'string' },
+        { internalType: 'address', name: 'erc20OnMainnet', type: 'address' },
+        { internalType: 'uint256', name: 'amount', type: 'uint256' },
+        { internalType: 'address', name: 'receiver', type: 'address' }
+      ],
+      name: 'depositERC20Direct',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function'
+    }],
+    functionName: 'depositERC20Direct',
+    args: [schainName, tokenAddress, amount, receiver]
+  });
+}
+
+function getAmountOffset(calldata, placeholder) {
+  const hex = placeholder.toString(16).padStart(64, '0');
+  const offset = calldata.toLowerCase().indexOf(hex.toLowerCase());
+  return offset === -1 ? -1 : (offset - 2) / 2;
+}
+
+function wrapWithTrailsRouter(token, target, callData) {
+  const amountOffset = getAmountOffset(callData, PLACEHOLDER);
+  if (amountOffset === -1) throw new Error('Placeholder not found in IMA calldata');
+
+  return {
+    callData: encodeFunctionData({
+      abi: [{
+        inputs: [
+          { name: 'token', type: 'address' },
+          { name: 'target', type: 'address' },
+          { name: 'callData', type: 'bytes' },
+          { name: 'amountOffset', type: 'uint256' },
+          { name: 'placeholder', type: 'bytes32' }
+        ],
+        name: 'injectAndCall',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function'
+      }],
+      functionName: 'injectAndCall',
+      args: [token, target, callData, BigInt(amountOffset), `0x${PLACEHOLDER.toString(16).padStart(64, '0')}`]
+    }),
+    toAddress: TRAILS_ROUTER
+  };
+}
+
+function signWithOWS(unsignedTxHex, chainId, walletName) {
+  try {
+    const result = JSON.parse(execSync(
+      `OWS_WALLET=${walletName} ows sign tx --chain eip155:${chainId} --tx "${unsignedTxHex}" --json`,
+      { encoding: 'utf8' }
+    ).trim());
+    return result;
+  } catch (err) {
+    console.error(`❌ OWS signing failed:`, err.message);
+    throw err;
+  }
+}
+
+function reconstructSignedTx(unsignedTx, signature, recoveryId) {
+  const sigBytes = Buffer.from(signature, 'hex');
+  const r = sigBytes.slice(0, 32);
+  const s = sigBytes.slice(32, 64);
+
+  function encodeInt(val) {
+    if (val === 0n || val === 0) return Buffer.from([]);
+    let hex = (typeof val === 'bigint' ? val : BigInt(val)).toString(16);
+    if (hex.length % 2) hex = '0' + hex;
+    return Buffer.from(hex, 'hex');
+  }
+
+  function encodeBuffer(buf) {
+    if (typeof buf === 'string') buf = Buffer.from(buf.slice(2), 'hex');
+    if (buf.length === 0) return Buffer.from([0x80]);
+    if (buf.length === 1 && buf[0] < 0x80) return buf;
+    if (buf.length < 56) return Buffer.concat([Buffer.from([0x80 + buf.length]), buf]);
+    const lenBuf = encodeInt(buf.length);
+    return Buffer.concat([Buffer.from([0xb7 + lenBuf.length]), lenBuf, buf]);
+  }
+
+  function rlpEncode(items) {
+    const encoded = Buffer.concat(items.map(item => {
+      if (item === 0n || item === 0) return Buffer.from([0x80]);
+      if (typeof item === 'bigint' || typeof item === 'number') {
+        const buf = encodeInt(item);
+        return encodeBuffer(buf);
+      }
+      if (typeof item === 'string') return encodeBuffer(item);
+      if (Array.isArray(item)) return rlpEncode(item);
+      return encodeBuffer(item);
+    }));
+
+    if (encoded.length < 56) return Buffer.concat([Buffer.from([0xc0 + encoded.length]), encoded]);
+    const lenBuf = encodeInt(encoded.length);
+    return Buffer.concat([Buffer.from([0xf7 + lenBuf.length]), lenBuf, encoded]);
+  }
+
+  const signedTxList = [
+    unsignedTx.chainId,
+    unsignedTx.nonce,
+    unsignedTx.maxPriorityFeePerGas,
+    unsignedTx.maxFeePerGas,
+    unsignedTx.gasLimit,
+    unsignedTx.to,
+    unsignedTx.value,
+    unsignedTx.data,
+    unsignedTx.accessList || [],
+    recoveryId,
+    r,
+    s
+  ];
+
+  const encoded = rlpEncode(signedTxList);
+  const txType = Buffer.from([0x02]);
+  return '0x' + Buffer.concat([txType, encoded]).toString('hex');
+}
+
+async function broadcastTx(publicClient, signedTx) {
+  try {
+    const hash = await publicClient.request({
+      method: 'eth_sendRawTransaction',
+      params: [signedTx]
+    });
+    return hash;
+  } catch (err) {
+    console.error(`❌ Broadcast failed:`, err.message);
+    throw err;
+  }
+}
+
+// ============================================================================
+// ARGUMENT PARSING
 // ============================================================================
 
 function parseArgs() {
-  const args = process.argv.slice(2);
   const config = {
     originChain: 'base',
     destinationChain: 'skale-base',
-    amount: '10000', // 0.01 USDC by default (6 decimals)
-    recipient: null,
+    amount: '10000',
+    recipient: undefined
   };
 
-  for (let i = 0; i < args.length; i += 2) {
-    const key = args[i].replace(/^--/, '');
-    const value = args[i + 1];
-
-    if (key === 'from') config.originChain = value;
-    if (key === 'to') config.destinationChain = value;
-    if (key === 'amount') config.amount = value;
-    if (key === 'recipient') config.recipient = value;
+  for (let i = 0; i < process.argv.length; i++) {
+    const arg = process.argv[i];
+    if (arg === '--from' && process.argv[i + 1]) config.originChain = process.argv[++i];
+    if (arg === '--to' && process.argv[i + 1]) config.destinationChain = process.argv[++i];
+    if (arg === '--amount' && process.argv[i + 1]) config.amount = process.argv[++i];
+    if (arg === '--recipient' && process.argv[i + 1]) config.recipient = process.argv[++i];
   }
 
   return config;
@@ -85,350 +231,238 @@ if (!CHAIN_MAP[config.destinationChain]) {
 // MAIN EXECUTION
 // ============================================================================
 
-const trails_api_key = process.env.TRAILS_API_KEY;
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const TRAILS_API_KEY = process.env.TRAILS_API_KEY;
+const WALLET_NAME = process.env.OWS_WALLET || 'skale-default';
 
-if (!PRIVATE_KEY) {
-  console.error('❌ Missing PRIVATE_KEY environment variable');
+if (!TRAILS_API_KEY) {
+  console.error('❌ Missing TRAILS_API_KEY environment variable');
   process.exit(1);
 }
 
-const trailsAPI = new TrailsApi(trails_api_key);
-const account = privateKeyToAccount(PRIVATE_KEY);
-const amountBigInt = BigInt(config.amount);
+async function main() {
+  const trailsAPI = new TrailsApi(TRAILS_API_KEY);
 
-const originChainInfo = CHAIN_MAP[config.originChain];
-const destChainInfo = CHAIN_MAP[config.destinationChain];
-const recipientAddress = config.recipient || account.address;
+  // Get signer address from OWS wallet
+  let signerAddress;
+  try {
+    const walletList = execSync(`ows wallet list`, { encoding: 'utf8' });
+    const match = walletList.match(new RegExp(`Name:\\s+${WALLET_NAME}[\\s\\S]*?eip155:1 \\(ethereum\\) → (0x[a-fA-F0-9]+)`));
+    if (!match) throw new Error(`Wallet ${WALLET_NAME} not found or no EVM address`);
+    signerAddress = match[1];
+  } catch (err) {
+    console.error(`❌ Failed to get signer address from OWS:`, err.message);
+    process.exit(1);
+  }
 
-console.log(`\n🌉 SKALE Bridge - Universal Execution`);
-console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-console.log(`📤 From: ${originChainInfo.name} (${originChainInfo.id})`);
-console.log(`📥 To: ${destChainInfo.name} (${destChainInfo.id})`);
-console.log(`💰 Amount: ${amountBigInt / 1000000n} USDC`);
-console.log(`👤 Recipient: ${recipientAddress}`);
-console.log(`🔑 Signer: ${account.address}`);
+  const amountBigInt = BigInt(config.amount);
+  const originChainInfo = CHAIN_MAP[config.originChain];
+  const destChainInfo = CHAIN_MAP[config.destinationChain];
+  const recipientAddress = config.recipient || signerAddress;
 
-// ============================================================================
-// BRIDGE LOGIC - Handle different patterns
-// ============================================================================
+  console.log(`\n🌉 SKALE Bridge - Universal Execution`);
+  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  console.log(`📤 From: ${originChainInfo.name} (${originChainInfo.id})`);
+  console.log(`📥 To: ${destChainInfo.name} (${destChainInfo.id})`);
+  console.log(`💰 Amount: ${amountBigInt / 1000000n} USDC`);
+  console.log(`👤 Recipient: ${recipientAddress}`);
+  console.log(`🔑 Signer: ${signerAddress} (${WALLET_NAME})`);
 
-async function executeBridge() {
-  // Pattern 1: TO SKALE (Base or non-Base)
+  // Bridge TO SKALE
   if (config.destinationChain === 'skale-base') {
-    return await bridgeToSKALE();
-  }
+    const originChainId = originChainInfo.id;
+    const originUSDC = USDC_ADDRESSES[originChainId];
 
-  // Pattern 2: FROM SKALE to Base
-  if (config.originChain === 'skale-base' && config.destinationChain === 'base') {
-    return await bridgeFromSKALE();
-  }
+    console.log(`\n🔀 Pattern: ${originChainId === 8453 ? 'Direct IMA' : 'Multi-hop via Base'}`);
 
-  console.error('❌ Unsupported bridge direction');
-  console.error(`   Supported: any chain → skale-base, or skale-base → base`);
-  process.exit(1);
-}
+    // 1. Get quote
+    console.log(`\n⏳ Getting quote from Trails API...`);
 
-// ============================================================================
-// Pattern 1: Bridge TO SKALE Base
-// ============================================================================
+    let destinationChainId = 8453;
+    let destinationTokenAddress = BASE_USDC;
+    let destinationToAddress, destinationCallData;
 
-async function bridgeToSKALE() {
-  console.log(`\n🔀 Pattern: ${originChainInfo.name === 'Base' ? 'Direct IMA' : 'Multi-hop via Base'}`);
-
-  const originChainId = originChainInfo.id;
-  const originUSDC = USDC_ADDRESSES[originChainId];
-
-  // Helper: Encode IMA DepositBox call
-  function encodeDepositERC20Direct(schainName, tokenAddress, amount, receiver) {
-    const abi = [
-      {
-        inputs: [
-          { internalType: 'string', name: 'schainName', type: 'string' },
-          { internalType: 'address', name: 'erc20OnMainnet', type: 'address' },
-          { internalType: 'uint256', name: 'amount', type: 'uint256' },
-          { internalType: 'address', name: 'receiver', type: 'address' }
-        ],
-        name: 'depositERC20Direct',
-        outputs: [],
-        stateMutability: 'nonpayable',
-        type: 'function'
-      }
-    ];
-
-    return encodeFunctionData({
-      abi,
-      functionName: 'depositERC20Direct',
-      args: [schainName, tokenAddress, amount, receiver]
-    });
-  }
-
-  // Encode base IMA call
-  const imaCalldata = encodeDepositERC20Direct(SKALE_CHAIN_NAME, BASE_USDC, amountBigInt, recipientAddress);
-
-  // Determine routing pattern
-  let destinationChainId = 8453; // Always route to Base for SKALE transfers
-  let destinationTokenAddress = BASE_USDC;
-  let destinationToAddress, destinationCallData;
-
-  if (originChainId === 8453) {
-    // Base → SKALE: Direct IMA (no Trails Router wrapper)
-    destinationToAddress = IMA_DEPOSIT_BOX;
-    destinationCallData = imaCalldata;
-  } else {
-    // Non-Base → SKALE: Multi-hop via Trails Router
-    // Encode IMA with placeholder for injection
-    const PLACEHOLDER = BigInt('0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef');
-    const imaCalldataPlaceholder = encodeDepositERC20Direct(SKALE_CHAIN_NAME, BASE_USDC, PLACEHOLDER, recipientAddress);
-
-    // Helper: Find placeholder offset
-    function getAmountOffset(calldata, placeholder) {
-      const hex = placeholder.toString(16).padStart(64, '0');
-      const offset = calldata.toLowerCase().indexOf(hex.toLowerCase());
-      if (offset === -1) return -1;
-      return (offset - 2) / 2;
+    if (originChainId === 8453) {
+      // Base → SKALE: Direct IMA
+      destinationToAddress = IMA_DEPOSIT_BOX;
+      destinationCallData = encodeDepositERC20Direct(SKALE_CHAIN_NAME, BASE_USDC, amountBigInt, recipientAddress);
+    } else {
+      // Non-Base → SKALE: Multi-hop
+      const imaCallData = encodeDepositERC20Direct(SKALE_CHAIN_NAME, BASE_USDC, PLACEHOLDER, recipientAddress);
+      const wrapped = wrapWithTrailsRouter(BASE_USDC, IMA_DEPOSIT_BOX, imaCallData);
+      destinationToAddress = wrapped.toAddress;
+      destinationCallData = wrapped.callData;
     }
 
-    const amountOffset = getAmountOffset(imaCalldataPlaceholder, PLACEHOLDER);
-    if (amountOffset === -1) {
-      throw new Error('❌ Placeholder not found in IMA calldata');
-    }
+    const quote = await trailsAPI.quoteIntent({
+      ownerAddress: signerAddress,
+      originChainId,
+      originTokenAddress: originUSDC,
+      originTokenAmount: amountBigInt.toString(),
+      destinationChainId,
+      destinationTokenAddress,
+      destinationToAddress,
+      destinationCallData,
+      slippageTolerance: 0.005,
+      destinationCallValue: '0',
+      tradeType: 'EXACT_INPUT',
+      options: {
+        bridgeProvider: RouteProvider.AUTO,
+      },
+    });
 
-    // Wrap with Trails Router injectAndCall
-    const routerAbi = [
-      {
-        inputs: [
-          { name: 'token', type: 'address' },
-          { name: 'target', type: 'address' },
-          { name: 'callData', type: 'bytes' },
-          { name: 'amountOffset', type: 'uint256' },
-          { name: 'placeholder', type: 'bytes32' }
-        ],
-        name: 'injectAndCall',
-        outputs: [],
-        stateMutability: 'nonpayable',
-        type: 'function'
-      }
+    const intentId = quote.intent.intentId;
+    console.log(`✓ Intent ID: ${intentId}`);
+
+    // 2. Commit intent
+    console.log(`\n⏳ Committing intent...`);
+    await trailsAPI.commitIntent({ intent: quote.intent });
+    console.log(`✓ Intent committed`);
+
+    // 3. Setup public client
+    const publicClient = createPublicClient({
+      chain: { id: originChainInfo.id, name: originChainInfo.name, nativeCurrency: { name: 'Native', symbol: 'ETH', decimals: 18 }, rpcUrls: { default: { http: [originChainInfo.rpc] } } },
+      transport: http(),
+    });
+
+    // 4. Check/approve allowance
+    console.log(`\n⏳ Checking USDC allowance...`);
+    const ERC20_ABI = [
+      { name: 'allowance', inputs: [{ name: 'owner', type: 'address' }, { name: 'spender', type: 'address' }], outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
+      { name: 'approve', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ type: 'bool' }], stateMutability: 'nonpayable', type: 'function' }
     ];
 
-    const placeholderBytes32 = `0x${PLACEHOLDER.toString(16).padStart(64, '0')}`;
-
-    destinationToAddress = TRAILS_ROUTER;
-    destinationCallData = encodeFunctionData({
-      abi: routerAbi,
-      functionName: 'injectAndCall',
-      args: [BASE_USDC, IMA_DEPOSIT_BOX, imaCalldataPlaceholder, BigInt(amountOffset), placeholderBytes32]
-    });
-  }
-
-  // 1. Get quote
-  console.log(`\n⏳ Getting quote from Trails API...`);
-  const quote = await trailsAPI.quoteIntent({
-    ownerAddress: account.address,
-    originChainId,
-    originTokenAddress: originUSDC,
-    originTokenAmount: amountBigInt.toString(),
-    destinationChainId,
-    destinationTokenAddress,
-    destinationToAddress,
-    destinationCallData,
-    slippageTolerance: 0.005,
-    destinationCallValue: '0',
-    tradeType: 'EXACT_INPUT',
-    options: {
-      bridgeProvider: RouteProvider.AUTO,
-    },
-  });
-
-  const intentId = quote.intent.intentId;
-  console.log(`✓ Intent ID: ${intentId}`);
-
-  // 2. Commit intent
-  console.log(`\n⏳ Committing intent...`);
-  await trailsAPI.commitIntent({ intent: quote.intent });
-  console.log(`✓ Intent committed`);
-
-  // 3. Setup wallet clients
-  const walletClient = createWalletClient({
-    account,
-    chain: originChainInfo.chain,
-    transport: http()
-  });
-
-  const publicClient = createPublicClient({
-    chain: originChainInfo.chain,
-    transport: http()
-  });
-
-  // 4. Check/approve allowance
-  console.log(`\n⏳ Checking USDC allowance...`);
-  const ERC20_ABI = [
-    { name: 'allowance', inputs: [{ name: 'owner', type: 'address' }, { name: 'spender', type: 'address' }], outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' },
-    { name: 'approve', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ type: 'bool' }], stateMutability: 'nonpayable', type: 'function' }
-  ];
-
-  const allowance = await publicClient.readContract({
-    address: originUSDC,
-    abi: ERC20_ABI,
-    functionName: 'allowance',
-    args: [account.address, quote.intent.depositTransaction.to]
-  });
-
-  console.log(`  Current allowance: ${allowance}`);
-
-  if (allowance < amountBigInt) {
-    console.log(`⏳ Approving USDC...`);
-    const nonce = await publicClient.getTransactionCount({ address: account.address });
-    const approveTx = await walletClient.writeContract({
-      nonce,
+    const allowance = await publicClient.readContract({
       address: originUSDC,
       abi: ERC20_ABI,
-      functionName: 'approve',
-      args: [quote.intent.depositTransaction.to, amountBigInt]
+      functionName: 'allowance',
+      args: [signerAddress, quote.intent.depositTransaction.to]
     });
-    console.log(`✓ Approval tx: ${approveTx}`);
-    await new Promise(r => setTimeout(r, 5000));
-  }
 
-  // 5. Transfer USDC
-  console.log(`\n⏳ Transferring USDC...`);
-  const nonce = await publicClient.getTransactionCount({ address: account.address });
-  const transferHash = await walletClient.sendTransaction({
-    nonce,
-    to: quote.intent.depositTransaction.to,
-    data: quote.intent.depositTransaction.data,
-    value: quote.intent.depositTransaction.value ? BigInt(quote.intent.depositTransaction.value) : 0n
-  });
+    console.log(`  Current allowance: ${allowance}`);
 
-  console.log(`✓ Transfer tx: ${transferHash}`);
+    if (allowance < amountBigInt) {
+      console.log(`⏳ Approving USDC with OWS...`);
+      
+      const nonce = await publicClient.getTransactionCount({ address: signerAddress });
+      const gasPrice = await publicClient.getGasPrice();
+      const maxPriorityFeeRaw = await publicClient.request({ method: 'eth_maxPriorityFeePerGas' });
+      const maxPriorityFee = typeof maxPriorityFeeRaw === 'string' ? BigInt(maxPriorityFeeRaw) : maxPriorityFeeRaw;
 
-  // 6. Wait for confirmation
-  console.log(`\n⏳ Waiting for transfer to be confirmed...`);
-  await publicClient.waitForTransactionReceipt({ hash: transferHash });
-  console.log(`✓ Transfer confirmed!`);
+      const approveData = encodeFunctionData({
+        abi: [{ name: 'approve', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ type: 'bool' }], stateMutability: 'nonpayable', type: 'function' }],
+        functionName: 'approve',
+        args: [quote.intent.depositTransaction.to, amountBigInt],
+      });
 
-  // 7. Execute intent
-  console.log(`\n⏳ Executing bridge intent...`);
-  await trailsAPI.executeIntent({
-    intentId,
-    depositTransactionHash: transferHash
-  });
-  console.log(`✓ Bridge execution initiated!`);
+      const unsignedApproveTx = {
+        to: originUSDC,
+        from: signerAddress,
+        data: approveData,
+        nonce,
+        chainId: originChainId,
+        gasLimit: 100000n,
+        maxPriorityFeePerGas: maxPriorityFee,
+        maxFeePerGas: gasPrice,
+        accessList: [],
+        value: 0n,
+      };
 
-  // 8. Wait for completion
-  console.log(`\n⏳ Waiting for bridge to complete (this may take 5-10 minutes)...`);
-  const receipt = await trailsAPI.waitIntentReceipt({ intentId, timeoutMs: 600000 });
-  console.log(`\n✅ Bridge ${receipt.intentStatus}!`);
-  if (receipt.executionTransactionHash) {
-    console.log(`   Execution tx: ${receipt.executionTransactionHash}`);
-  }
+      const approveRlp = serializeTransaction({
+        to: unsignedApproveTx.to,
+        from: unsignedApproveTx.from,
+        data: unsignedApproveTx.data,
+        nonce: unsignedApproveTx.nonce,
+        chainId: unsignedApproveTx.chainId,
+        gas: unsignedApproveTx.gasLimit,
+        type: 'eip1559',
+        maxPriorityFeePerGas: unsignedApproveTx.maxPriorityFeePerGas,
+        maxFeePerGas: unsignedApproveTx.maxFeePerGas,
+      });
 
-  return { intentId, status: receipt.intentStatus };
-}
+      const approveSign = signWithOWS(approveRlp, originChainId, WALLET_NAME);
+      const signedApproveTx = reconstructSignedTx(unsignedApproveTx, approveSign.signature, approveSign.recovery_id);
+      
+      const approveTxHash = await broadcastTx(publicClient, signedApproveTx);
+      console.log(`✓ Approval tx: ${approveTxHash}`);
+      await new Promise(r => setTimeout(r, 5000));
+    }
 
-// ============================================================================
-// Pattern 2: Bridge FROM SKALE Base to Base
-// ============================================================================
+    // 5. Transfer USDC
+    console.log(`\n⏳ Transferring USDC with OWS...`);
+    
+    const nonce = await publicClient.getTransactionCount({ address: signerAddress });
+    const gasPrice = await publicClient.getGasPrice();
+    const maxPriorityFeeRaw = await publicClient.request({ method: 'eth_maxPriorityFeePerGas' });
+    const maxPriorityFee = typeof maxPriorityFeeRaw === 'string' ? BigInt(maxPriorityFeeRaw) : maxPriorityFeeRaw;
 
-async function bridgeFromSKALE() {
-  console.log(`\n🔀 Pattern: IMA Exit + Community Pool`);
+    const txValue = quote.intent.depositTransaction.value ? BigInt(quote.intent.depositTransaction.value) : 0n;
 
-  const skaleClient = createWalletClient({
-    account,
-    chain: originChainInfo.chain,
-    transport: http()
-  });
+    const unsignedTransferTx = {
+      to: quote.intent.depositTransaction.to,
+      from: signerAddress,
+      data: quote.intent.depositTransaction.data,
+      nonce,
+      chainId: originChainId,
+      gasLimit: 500000n,
+      maxPriorityFeePerGas: maxPriorityFee,
+      maxFeePerGas: gasPrice,
+      accessList: [],
+      value: txValue,
+    };
 
-  const skalePublicClient = createPublicClient({
-    chain: originChainInfo.chain,
-    transport: http()
-  });
-
-  const baseClient = createWalletClient({
-    account,
-    chain: base,
-    transport: http()
-  });
-
-  const basePublicClient = createPublicClient({
-    chain: base,
-    transport: http()
-  });
-
-  // 1. Check Community Pool activation
-  console.log(`\n⏳ Checking Community Pool status...`);
-  const poolBalance = await basePublicClient.readContract({
-    address: COMMUNITY_POOL,
-    abi: [{ inputs: [{ name: 'user', type: 'address' }, { name: 'schainName', type: 'string' }], name: 'getBalance', outputs: [{ type: 'uint256' }], stateMutability: 'view', type: 'function' }],
-    functionName: 'getBalance',
-    args: [account.address, SKALE_CHAIN_NAME]
-  });
-
-  const isActiveOnLocker = await skalePublicClient.readContract({
-    address: COMMUNITY_LOCKER,
-    abi: [{ inputs: [{ name: '', type: 'address' }], name: 'activeUsers', outputs: [{ type: 'bool' }], stateMutability: 'view', type: 'function' }],
-    functionName: 'activeUsers',
-    args: [account.address]
-  });
-
-  console.log(`  Pool Balance: ${poolBalance}`);
-  console.log(`  Active on Locker: ${isActiveOnLocker}`);
-
-  // 2. Recharge Community Pool if needed
-  if (poolBalance === 0n || !isActiveOnLocker) {
-    console.log(`\n⏳ Community Pool not active. Recharging with 0.0001 ETH...`);
-    const rechargeHash = await baseClient.writeContract({
-      address: COMMUNITY_POOL,
-      abi: [{ inputs: [{ name: 'schainName', type: 'string' }, { name: 'receiver', type: 'address' }], name: 'rechargeUserWallet', outputs: [], stateMutability: 'payable', type: 'function' }],
-      functionName: 'rechargeUserWallet',
-      args: [SKALE_CHAIN_NAME, account.address],
-      value: 100000000000n // 0.0001 ETH
+    const transferRlp = serializeTransaction({
+      to: unsignedTransferTx.to,
+      from: unsignedTransferTx.from,
+      data: unsignedTransferTx.data,
+      nonce: unsignedTransferTx.nonce,
+      chainId: unsignedTransferTx.chainId,
+      gas: unsignedTransferTx.gasLimit,
+      type: 'eip1559',
+      maxPriorityFeePerGas: unsignedTransferTx.maxPriorityFeePerGas,
+      maxFeePerGas: unsignedTransferTx.maxFeePerGas,
+      value: unsignedTransferTx.value,
     });
-    console.log(`✓ Recharge tx: ${rechargeHash}`);
-    await basePublicClient.waitForTransactionReceipt({ hash: rechargeHash });
-    console.log(`✓ Recharge confirmed! Waiting for activation (30 seconds)...`);
-    await new Promise(r => setTimeout(r, 30000));
+
+    const transferSign = signWithOWS(transferRlp, originChainId, WALLET_NAME);
+    const signedTransferTx = reconstructSignedTx(unsignedTransferTx, transferSign.signature, transferSign.recovery_id);
+    
+    const transferHash = await broadcastTx(publicClient, signedTransferTx);
+    console.log(`✓ Transfer tx: ${transferHash}`);
+
+    // 6. Wait for confirmation
+    console.log(`\n⏳ Waiting for transfer to be confirmed...`);
+    await publicClient.waitForTransactionReceipt({ hash: transferHash });
+    console.log(`✓ Transfer confirmed!`);
+
+    // 7. Execute intent
+    console.log(`\n⏳ Executing bridge intent...`);
+    await trailsAPI.executeIntent({
+      intentId,
+      depositTransactionHash: transferHash
+    });
+    console.log(`✓ Bridge execution initiated!`);
+
+    // 8. Wait for completion
+    console.log(`\n⏳ Waiting for bridge to complete (this may take 5-10 minutes)...`);
+    const receipt = await trailsAPI.waitIntentReceipt({ intentId, timeoutMs: 600000 });
+    console.log(`\n✅ Bridge ${receipt.intentStatus}!`);
+    if (receipt.executionTransactionHash) {
+      console.log(`   Execution tx: ${receipt.executionTransactionHash}`);
+    }
+
+    console.log(`\n📊 Summary:`);
+    console.log(`   Amount: ${amountBigInt / 1000000n} USDC`);
+    console.log(`   From: ${originChainInfo.name}`);
+    console.log(`   To: ${destChainInfo.name}`);
+    console.log(`   Intent ID: ${intentId}`);
+    console.log(`   Transfer TX: ${transferHash}\n`);
   } else {
-    console.log(`✓ Community Pool already active`);
+    console.error(`❌ Unsupported bridge direction`);
+    process.exit(1);
   }
-
-  // 3. Approve TokenManager
-  console.log(`\n⏳ Approving USDC for TokenManager...`);
-  const nonce = await skalePublicClient.getTransactionCount({ address: account.address });
-  const approveTx = await skaleClient.writeContract({
-    nonce,
-    address: SKALE_USDC,
-    abi: [{ name: 'approve', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ type: 'bool' }], stateMutability: 'nonpayable', type: 'function' }],
-    functionName: 'approve',
-    args: [TOKEN_MANAGER_ERC20, amountBigInt]
-  });
-  console.log(`✓ Approval tx: ${approveTx}`);
-  await new Promise(r => setTimeout(r, 5000));
-
-  // 4. Execute Exit
-  console.log(`\n⏳ Executing exit from SKALE...`);
-  const exitNonce = await skalePublicClient.getTransactionCount({ address: account.address });
-  const exitHash = await skaleClient.writeContract({
-    nonce: exitNonce,
-    address: TOKEN_MANAGER_ERC20,
-    abi: [{ inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], name: 'exitToMainERC20', outputs: [], stateMutability: 'nonpayable', type: 'function' }],
-    functionName: 'exitToMainERC20',
-    args: [recipientAddress, amountBigInt]
-  });
-
-  console.log(`✓ Exit tx: ${exitHash}`);
-  console.log(`\n✅ Bridge initiated! USDC will arrive on Base in 5-10 minutes`);
-
-  return { exitHash, status: 'INITIATED' };
 }
 
-// ============================================================================
-// EXECUTE
-// ============================================================================
-
-try {
-  await executeBridge();
-} catch (error) {
-  console.error(`\n❌ Bridge failed:`, error.message);
+main().catch(err => {
+  console.error('\n❌ Error:', err.message);
   process.exit(1);
-}
+});
