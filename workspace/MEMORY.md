@@ -218,3 +218,148 @@ curl -s -X POST https://mainnet.base.org \
 - **Multi-chain:** Change `--chain` parameter and RPC URL; addresses auto-derive per chain
 - **Solana transactions:** Use `--chain solana` with different transaction structure
 - **Bitcoin transactions:** Use `--chain bitcoin` for UTXO-based signing
+
+---
+
+## Bridge Workflow - Generic Multi-Chain Execution
+
+**Universal bridge script for all supported directions. Created 2026-04-22.**
+
+### Prerequisites
+- User's wallet funded with USDC on **origin chain**
+- `TRAILS_API_KEY` environment variable already configured on the skill
+- Private key derived from OWS wallet
+
+### Quick Execution Path
+
+**Step 1: Export & Derive Private Key**
+```bash
+# Export mnemonic
+ows wallet export --wallet skale-default
+
+# Derive private key (standard Ethereum HD path m/44'/60'/0'/0/0)
+node << 'JSCODE'
+const bip39 = require("bip39");
+const { hdkey } = require("ethereumjs-wallet");
+
+const mnemonic = "YOUR_24_WORD_MNEMONIC";
+const seed = bip39.mnemonicToSeedSync(mnemonic);
+const hdwallet = hdkey.fromMasterSeed(seed);
+const wallet = hdwallet.derivePath("m/44'/60'/0'/0/0").getWallet();
+const privateKey = "0x" + wallet.getPrivateKey().toString("hex");
+
+console.log(privateKey);
+JSCODE
+```
+
+**Step 2: Run Generic Bridge Script**
+```bash
+cd ~/clawd/skills/SKALE-Bridge
+
+# Base → SKALE Base (0.01 USDC)
+PRIVATE_KEY="0x..." node /home/node/clawd/workspace/bridge-execution-generic.js
+
+# Polygon → SKALE Base (0.05 USDC to different recipient)
+PRIVATE_KEY="0x..." node /home/node/clawd/workspace/bridge-execution-generic.js \
+  --from polygon \
+  --to skale-base \
+  --amount 50000 \
+  --recipient 0x1234567890123456789012345678901234567890
+
+# SKALE Base → Base (0.01 USDC)
+PRIVATE_KEY="0x..." node /home/node/clawd/workspace/bridge-execution-generic.js \
+  --from skale-base \
+  --to base
+```
+
+**Supported Parameters:**
+- `--from` — Origin chain: `base`, `polygon`, `optimism`, `arbitrum`, `avalanche`, `monad`, `skale-base` (default: `base`)
+- `--to` — Destination chain: `skale-base`, `base` (default: `skale-base`)
+- `--amount` — USDC amount in 6-decimal format, e.g., `10000` = 0.01 USDC (default: `10000`)
+- `--recipient` — Recipient address on destination chain (default: signer address)
+
+**Expected Output:**
+- Bridge direction and pattern (Direct IMA, Multi-hop, or IMA Exit)
+- Intent ID
+- Approval & transfer TX hashes
+- Bridge execution confirmation
+- Completion status (5-10 minutes for USDC arrival)
+
+### Key Files & Locations
+
+| File | Purpose | Location |
+|------|---------|----------|
+| **bridge-execution-generic.js** | ⭐ Universal bridge script (all chains & directions) | `/home/node/clawd/workspace/bridge-execution-generic.js` |
+| **bridge-execution.js** | Original Base → SKALE script (reference) | `/home/node/clawd/workspace/bridge-execution.js` |
+| **SKALE-Bridge skill** | Trails API + IMA contract details | `~/clawd/skills/SKALE-Bridge/` |
+| **bridge-to-skale-base.md** | Multi-chain bridge patterns reference | `~/clawd/skills/SKALE-Bridge/references/` |
+| **bridge-from-skale-base.md** | SKALE → Base pattern reference | `~/clawd/skills/SKALE-Bridge/references/` |
+| **package.json** | Node deps (bip39, viem, trails) | `~/clawd/skills/SKALE-Bridge/` |
+
+### Supported Bridge Directions
+
+**Generic script handles all these automatically:**
+
+1. **Base → SKALE Base** (Direct IMA, fastest)
+   ```bash
+   PRIVATE_KEY="0x..." node bridge-execution-generic.js
+   ```
+
+2. **Polygon → SKALE Base** (Multi-hop via Base)
+   ```bash
+   PRIVATE_KEY="0x..." node bridge-execution-generic.js --from polygon
+   ```
+
+3. **Optimism → SKALE Base** (Multi-hop via Base)
+   ```bash
+   PRIVATE_KEY="0x..." node bridge-execution-generic.js --from optimism
+   ```
+
+4. **Arbitrum → SKALE Base** (Multi-hop via Base)
+   ```bash
+   PRIVATE_KEY="0x..." node bridge-execution-generic.js --from arbitrum
+   ```
+
+5. **Avalanche → SKALE Base** (Multi-hop via Base)
+   ```bash
+   PRIVATE_KEY="0x..." node bridge-execution-generic.js --from avalanche
+   ```
+
+6. **Monad → SKALE Base** (Multi-hop via Base)
+   ```bash
+   PRIVATE_KEY="0x..." node bridge-execution-generic.js --from monad
+   ```
+
+7. **SKALE Base → Base** (IMA Exit + Community Pool)
+   ```bash
+   PRIVATE_KEY="0x..." node bridge-execution-generic.js --from skale-base --to base
+   ```
+
+### Dependencies Required
+
+```json
+{
+  "@0xtrails/api": "^0.13.2",
+  "viem": "^2.47.5",
+  "bip39": "^3.0.4",
+  "ethereumjs-wallet": "^1.0.2"
+}
+```
+
+Install via: `cd ~/clawd/skills/SKALE-Bridge && npm install`
+
+### Common Errors & Fixes
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `ERC20: transfer amount exceeds balance` | User wallet doesn't have enough USDC on origin chain | Fund wallet first, then retry |
+| `Cannot find module '@0xtrails/api'` | Dependencies not installed | Run `npm install` in skill directory |
+| `Missing TRAILS_API_KEY` | Env var not set in skill | Verify TRAILS_API_KEY is configured on SKALE-Bridge skill |
+| `Invalid private key` | Mnemonic → private key derivation failed | Re-export OWS wallet, verify mnemonic spelling |
+
+### Why This Path?
+
+1. **Minimal hops** — Direct OWS → Viem signing (vs. OWS CLI sign command which is interactive)
+2. **Scriptable** — Private key derivation works in any environment
+3. **Reliable** — Viem + Trails API handle gas estimation, nonce management, retries
+4. **Reproducible** — Same 3 steps for any bridge amount/recipient
