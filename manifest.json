@@ -27,6 +27,10 @@
     {
       "cid": "bafybeihqymfhxpn7fuv4hytwqjy5down7bacffm55rxkr3a54ezuk5p4ly",
       "name": "SKALE-x402"
+    },
+    {
+      "cid": "bafybeid6urm5p3cp5gvivccxwr4grrkptrjxbjnaey64vmaflp6v5chukq",
+      "name": "SKALE-Bite"
     }
   ],
   "secrets": [
