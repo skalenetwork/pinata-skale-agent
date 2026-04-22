@@ -354,23 +354,41 @@ async function bridgeMonadToSkale() {
 
   console.log(`📤 Broadcasting Transfer...`);
   const transferTxHash = await broadcastTx(monadPublicClient, signedTransferTx);
-  console.log(`✓ Transfer TX: ${transferTxHash}\n`);
+  console.log(`✓ Transfer TX: ${transferTxHash}`);
 
-  // 11. Summary
+  // 10. Wait for transfer confirmation
+  console.log(`\n⏳ Waiting for transfer confirmation...`);
+  await monadPublicClient.waitForTransactionReceipt({ hash: transferTxHash });
+  console.log(`✓ Transfer confirmed!\n`);
+
+  // 11. Execute intent with Trails API
+  console.log(`\n⏳ Executing Trails intent...`);
+  await trailsAPI.executeIntent({ intentId, depositTransactionHash: transferTxHash });
+  console.log(`✓ Intent execution initiated\n`);
+
+  // 12. Wait for completion
+  console.log(`⏳ Waiting for bridge to complete (this may take 2-5 minutes)...`);
+  const receipt = await trailsAPI.waitIntentReceipt({ intentId, timeoutMs: 600000 }); // 10 minute timeout
+  
+  console.log(`✓ Bridge ${receipt.intentStatus}`);
+  if (receipt.executionTransactionHash) console.log(`  Execution TX: ${receipt.executionTransactionHash}\n`);
+
+  // 13. Summary
   console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
   console.log(`✅ Bridge Execution Complete!\n`);
   console.log(`📊 Summary:`);
   console.log(`   Amount: ${amountDisplay} USDC`);
   console.log(`   From: ${SIGNER}`);
   console.log(`   Route: Monad → Base → SKALE`);
+  console.log(`   Intent ID: ${intentId}`);
   console.log(`   Approval TX: ${approveTxHash}`);
   console.log(`   Transfer TX: ${transferTxHash}`);
-  console.log(`   Intent ID: ${intentId}\n`);
-  console.log(`⏱️  Status: Bridge in progress`);
-  console.log(`⏳ ETA: 2-5 minutes for USDC to arrive on SKALE Base\n`);
+  if (receipt.executionTransactionHash) console.log(`   Execution TX: ${receipt.executionTransactionHash}`);
+  console.log(`   Status: ${receipt.intentStatus}\n`);
   console.log(`🔗 Track on Blockscout:`);
-  console.log(`   Monad: https://monadbtc.blockscout.com/tx/${transferTxHash}`);
-  console.log(`   SKALE: Check intent ${intentId}\n`);
+  console.log(`   Monad Approval: https://monadbtc.blockscout.com/tx/${approveTxHash}`);
+  console.log(`   Monad Transfer: https://monadbtc.blockscout.com/tx/${transferTxHash}`);
+  console.log(`   Intent Details: https://dashboard.trails.build/intents/${intentId}\n`);
 }
 
 // Execute
