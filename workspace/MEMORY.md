@@ -1,8 +1,175 @@
 # MEMORY.md - Long-Term Memory
 
+## RandomMint ERC-721 Contract Deployment (2026-04-22 14:56 UTC)
+
+**Status:** ✅ Successfully deployed to SKALE Base mainnet
+
+### Contract Details
+- **Name:** RandomMint
+- **Type:** ERC-721 with SKALE Native RNG
+- **Address:** `0x80fbb6908244d3f5725f61764bb173f3b7f06660`
+- **Network:** SKALE Base Mainnet (Chain ID: 1187947933)
+- **Transaction:** `0x8b37cc0c0fc72173491fa052bd1394215a52e3c54ffdbc8e66a8fe3125d09fba`
+- **Signer:** `0xb50CdEBc05b11574610739f3aCfA1f1DDe1e8A29` (skale-default wallet)
+
+### Features
+- ✅ Open `mint()` function — anyone can mint 1-10 random NFTs
+- ✅ Uses SKALE native RNG (precompile at 0x18)
+- ✅ Batch mint function (`batchMint()`) for bulk operations
+- ✅ Full ERC-721 standard compliance
+- ✅ Multi-Transaction Mode (MTM) support
+- ✅ Zero gas fees for users (SKALE model)
+
+### Explorer
+- **View Contract:** https://skale-base-explorer.skalenodes.com/address/0x80fbb6908244d3f5725f61764bb173f3b7f06660
+
+### Source Code
+- **File:** `/home/node/clawd/workspace/skale-contracts/src/RandomMint.sol`
+- **Deployment script:** `/home/node/clawd/workspace/skale-contracts/script/Deploy.s.sol`
+
+### Deployment Method
+Used OWS wallet signing with manual RLP transaction encoding, EIP-1559 format, and direct RPC broadcast (deployment-randomint-simple.sh script)
+
+---
+
+## SKALE Contracts Deployment & Verification Workflow
+
+### ⭐ CRITICAL WORKFLOW (Follow Always)
+
+**For every contract deployment on SKALE Base:**
+
+1. **ALWAYS use this Foundry project folder:** `/home/node/clawd/workspace/skale-contracts`
+2. **ALWAYS verify after deployment** using the Blockscout verifier pattern below
+
+### Deployment Steps
+
+```bash
+# 1. Create your contract in src/ folder
+# 2. Edit script/Deploy.s.sol to deploy it
+# 3. Export private key from OWS wallet
+export PRIVATE_KEY=$(ows wallet export --wallet "skale-default")
+
+# 4. Deploy to testnet FIRST (Chain: SKALE Base Sepolia)
+cd /home/node/clawd/workspace/skale-contracts
+forge script script/Deploy.s.sol \
+  --rpc-url skale_base_sepolia \
+  --private-key $PRIVATE_KEY \
+  --legacy \
+  --broadcast
+
+# 5. After testing, deploy to mainnet (Chain: SKALE Base)
+forge script script/Deploy.s.sol \
+  --rpc-url skale_base \
+  --private-key $PRIVATE_KEY \
+  --legacy \
+  --broadcast
+
+# 6. Clean up private key
+unset PRIVATE_KEY
+```
+
+### Verification Pattern (ALWAYS use this)
+
+After deployment, verify the contract using Blockscout verifier:
+
+```bash
+forge verify-contract \
+ --rpc-url <chain_rpc> \
+ <contract_address> \
+ src/<contract_name_file>.sol:<contract_name> \
+ --verifier blockscout \
+ --verifier-url <explorer_base_url>/api
+```
+
+**Replace these placeholders:**
+- `<chain_rpc>` — RPC URL (see SKALE-Deploy skill references for full list)
+  - Mainnet: `https://skale-base.skalenodes.com/v1/base`
+  - Testnet: `https://base-sepolia-testnet.skalenodes.com/v1/jubilant-horrible-ancha`
+- `<contract_address>` — Deployed contract address (from broadcast output)
+- `<contract_name_file>` — File name in src/ (e.g., FreeMint)
+- `<contract_name>` — Contract class name (e.g., FreeMint)
+- `<explorer_base_url>` — Blockscout URL (see below)
+
+**Explorer URLs by Network:**
+- **Mainnet:** `https://skale-base-explorer.skalenodes.com`
+- **Testnet:** `https://base-sepolia-testnet-explorer.skalenodes.com`
+
+### Real Example
+
+```bash
+# Verify FreeMint contract on mainnet
+forge verify-contract \
+ --rpc-url https://skale-base.skalenodes.com/v1/base \
+ 0x3b3475C987796c2880ecb60c6EcD5dFAf8d81fBf \
+ src/FreeMint.sol:FreeMint \
+ --verifier blockscout \
+ --verifier-url https://skale-base-explorer.skalenodes.com/api
+```
+
+---
+
+## SKALE Contracts Project Setup & Deployments
+
+### Project Status
+**Status:** ✅ Active — Foundry project ready for deployment
+**Location:** `/home/node/clawd/workspace/skale-contracts`
+
+---
+
+## FreeMint ERC-721 Contract Deployment (2026-04-22 14:22 UTC)
+
+**Status:** ✅ Successfully deployed to SKALE Base mainnet
+
+### Contract Details
+- **Name:** FreeMint
+- **Symbol:** FM
+- **Address:** `0x3b3475C987796c2880ecb60c6EcD5dFAf8d81fBf`
+- **Network:** SKALE Base Mainnet (Chain ID: 1187947933)
+- **Transaction:** `0xcf8d8e59862aceaf3336c33fdfb48c6fade016d89506b54b6e61e63378edb656`
+
+### Features
+- ✅ Free mint function (`mint(string uri)`) — anyone can mint
+- ✅ Batch mint function (`batchMint(string[] uris)`) — mint multiple in one tx
+- ✅ Standard ERC-721 transfers, approvals
+- ✅ Token URI metadata support
+- ✅ No gas fees for users (SKALE model)
+
+### Source Code
+- **File:** `/home/node/clawd/workspace/skale-contracts/src/FreeMint.sol`
+- **Deployment script:** `/home/node/clawd/workspace/skale-contracts/script/Deploy.s.sol`
+
+### Explorer
+- **View on SKALE Base Explorer:** https://skale-base-explorer.skalenodes.com/address/0x3b3475C987796c2880ecb60c6EcD5dFAf8d81fBf
+
+---
+
+## SKALE Contracts Project Setup (2026-04-22 14:19 UTC)
+
+### Project Details
+- **Folder:** `/home/node/clawd/workspace/skale-contracts`
+- **Tool:** Foundry (forge 1.5.1-stable)
+- **Configuration:**
+  - Solidity version: 0.8.24
+  - EVM version: istanbul (SKALE requirement)
+  - RPC endpoints configured for both mainnet & testnet
+
+### Features Ready
+- ✅ Deployment script template at `script/Deploy.s.sol`
+- ✅ SKALE Base mainnet + Sepolia testnet endpoints in foundry.toml
+- ✅ `.env.example` for private key setup
+- ✅ Comprehensive README with deployment workflows
+- ✅ Default to legacy transactions (required for SKALE)
+
+### Usage Going Forward
+- **All new contract projects → use `/home/node/clawd/workspace/skale-contracts`**
+- **Unless explicitly told otherwise, always use this folder**
+- **Deploy with:** `forge script script/Deploy.s.sol --rpc-url <network> --private-key $PRIVATE_KEY --legacy --broadcast`
+
+---
+
 ## OWS Wallet Setup & Usage
 
-**Status:** ✅ Active — `skale-default` wallet created and tested
+**Status:** ✅ Active — `skale-default` wallet created and tested, funded with CREDIT
 
 ### Wallet Details
 - **Name:** skale-default
