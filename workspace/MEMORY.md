@@ -194,8 +194,27 @@ curl -s -X POST https://mainnet.base.org \
 
 ---
 
+## Policy: Default Wallet for All Blockchain Transactions
+
+⚠️ **IMPORTANT RULE:**
+
+**All blockchain transactions should be signed with `skale-default` wallet FIRST, unless explicitly told otherwise.**
+
+- If you ask me to sign a transaction (any chain, any type), I will use `skale-default` by default
+- If you want a different wallet, you **must explicitly say so** (e.g., "use a different wallet" or "create a new wallet")
+- This applies to:
+  - Native gas transfers (ETH, SOL, BTC, etc.)
+  - Token transfers (ERC-20, SPL, etc.)
+  - Smart contract interactions
+  - Multi-chain operations
+  - Anything requiring a signature
+
+---
+
 ## Next Steps for Other Transaction Types
 
 - **Token transfers (ERC-20):** Encode `data` field with transfer calldata (function selector + args)
 - **Contract calls:** Similar approach; construct calldata instead of empty `data`
 - **Multi-chain:** Change `--chain` parameter and RPC URL; addresses auto-derive per chain
+- **Solana transactions:** Use `--chain solana` with different transaction structure
+- **Bitcoin transactions:** Use `--chain bitcoin` for UTXO-based signing

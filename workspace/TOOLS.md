@@ -43,10 +43,11 @@ Add whatever helps you do your job. This is your cheat sheet.
 
 ## OWS Wallet Configuration
 
-### Default Wallet
+### Default Wallet (PRIMARY SIGNING WALLET)
 - **Wallet Name:** `skale-default`
 - **Wallet ID:** `a8c407fc-84f9-4602-ab37-58e9e62dffce`
-- **Status:** ✅ Active — use for all blockchain signing operations unless otherwise specified
+- **Status:** ✅ Active — **USE FOR ALL BLOCKCHAIN TRANSACTIONS BY DEFAULT**
+- **Rule:** If asked to sign/send a blockchain tx, always use this wallet unless you explicitly say otherwise
 
 **Supported Addresses:**
 - EVM (Ethereum, Polygon, Base, etc.): `0xb50CdEBc05b11574610739f3aCfA1f1DDe1e8A29`
