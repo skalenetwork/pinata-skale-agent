@@ -19,6 +19,10 @@
     {
       "cid": "bafybeidsi7f4jvnlzsjfllufjt7w7ie2atg5jvvp2ugfvep7ndfwsbqdki",
       "name": "SKALE-Deploy"
+    },
+    {
+      "cid": "bafybeia7aj4wm2gxhgeoi6fg5iiliddlqfyhchxisnua63l3xcbinck73q",
+      "name": "SKALE-Partners"
     }
   ],
   "secrets": [

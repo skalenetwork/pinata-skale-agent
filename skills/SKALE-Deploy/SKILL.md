@@ -527,32 +527,9 @@ Without MTM, subsequent transactions from the same account within the same block
 - **Gaming Platforms**: Handle real-time multiplayer state updates
 - **Social Apps**: Batch notifications, follows, content posts
 
-### Quick Start (Recommended: Use Generic Executor)
+### Quick Start
 
-For immediate batch execution without writing code, use the **generic MTM executor script** available in your workspace:
-
-```bash
-# Execute any contract function x times
-export PRIVATE_KEY=$(ows wallet export --wallet "skale-default")
-node ~/clawd/workspace/mtm-executor.js \
-  --contract 0x3EA415d43e5ad81E05954193600Cb187B9B96F85 \
-  --function mint \
-  --count 10
-```
-
-**Supports:**
-- Any contract function
-- Custom arguments with `--args '["arg1","arg2"]'`
-- Custom ABI files with `--abi ./abi.json`
-- Custom RPC endpoints with `--rpc "..."`
-
-For complete documentation, examples, and advanced patterns, see:
-- **Full Guide:** `~/clawd/workspace/MTM_EXECUTOR_README.md`
-- **Wrapper Script:** `bash ~/clawd/workspace/run-mtm-mint.sh`
-
-### Manual Implementation (For Custom Use Cases)
-
-For applications requiring custom logic, implement MTM directly with manual nonce management:
+Initialize nonce and fire transactions with manual incrementation:
 
 ```javascript
 import { ethers } from 'ethers';
