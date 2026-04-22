@@ -194,20 +194,35 @@ curl -s -X POST https://mainnet.base.org \
 
 ---
 
-## Policy: Default Wallet for All Blockchain Transactions
+## Policy: Default Wallet & Signing Method for All Blockchain Transactions
 
-⚠️ **IMPORTANT RULE:**
+⚠️ **IMPORTANT RULES:**
 
+### Rule 1: Always Use OWS Signing
+**Never ask for or use raw PRIVATE_KEY. Always use OWS for signing.**
+- OWS keeps keys encrypted at rest
+- Private key never exposed in environment
+- Secure, auditable, repeatable
+- Use `ows sign tx` command with unsigned transaction hex
+
+### Rule 2: Always Use skale-default Wallet
 **All blockchain transactions should be signed with `skale-default` wallet FIRST, unless explicitly told otherwise.**
-
-- If you ask me to sign a transaction (any chain, any type), I will use `skale-default` by default
-- If you want a different wallet, you **must explicitly say so** (e.g., "use a different wallet" or "create a new wallet")
+- If asked to sign a transaction (any chain, any type), use `skale-default` by default
+- If user wants a different wallet, they **must explicitly say so** (e.g., "use a different wallet" or "create a new wallet")
 - This applies to:
   - Native gas transfers (ETH, SOL, BTC, etc.)
   - Token transfers (ERC-20, SPL, etc.)
   - Smart contract interactions
   - Multi-chain operations
+  - Bridge transactions
   - Anything requiring a signature
+
+### Rule 3: Always Use Generic Bridge Script
+**For SKALE bridging, ALWAYS use `/home/node/clawd/workspace/bridge-execution-generic.js`**
+- It's chain-agnostic, reusable, and uses OWS signing
+- Don't create custom one-off bridge scripts
+- Don't question which script to use
+- The generic script handles everything: approval, transfer, intent execution, and completion wait
 
 ---
 
@@ -243,6 +258,53 @@ curl -s -X POST https://mainnet.base.org \
 6. Built transfer transaction → signed with OWS
 7. Reconstructed signed EIP-1559 transactions
 8. Broadcast both TXs to Monad
+
+---
+
+## Bridge Workflow - Generic Multi-Chain Execution (OWS Signing)
+
+**⭐ UPDATED 2026-04-22 12:30 UTC - Now uses OWS signing (skale-default by default)**
+
+### Quick Start
+```bash
+# Bridge 0.01 USDC from Monad to SKALE Base using skale-default wallet
+OWS_WALLET=skale-default node /home/node/clawd/workspace/bridge-execution-generic.js \
+  --from monad \
+  --to skale-base \
+  --amount 10000
+
+# Bridge 0.05 USDC from Polygon to SKALE Base
+OWS_WALLET=skale-default node /home/node/clawd/workspace/bridge-execution-generic.js \
+  --from polygon \
+  --to skale-base \
+  --amount 50000
+```
+
+### Configuration
+- **Script:** `/home/node/clawd/workspace/bridge-execution-generic.js`
+- **Signing:** OWS (Open Wallet Standard) - no private key exposure
+- **Default wallet:** `skale-default` (EVM: `0xb50CdEBc05b11574610739f3aCfA1f1DDe1e8A29`)
+- **Environment:** `OWS_WALLET=<name>` (optional), `TRAILS_API_KEY` (required)
+
+### Supported Bridge Directions
+- **Any EVM → SKALE Base:** Base, Polygon, Optimism, Arbitrum, Avalanche, Monad
+- **SKALE Base → Base:** (coming soon)
+
+### Technical Details
+- Uses `OWS_WALLET` for signing (default: `skale-default`)
+- Constructs unsigned EIP-1559 transactions
+- Signs via `ows sign tx --chain eip155:<chainId>`
+- Reconstructs signed TX with RLP encoding
+- Broadcasts via eth_sendRawTransaction
+- Executes Trails API intent
+- Waits for bridge completion (5-10 minutes)
+
+### Why OWS Signing?
+1. ✅ Private key never exposed (encrypted at rest)
+2. ✅ Works with skale-default wallet automatically
+3. ✅ No PRIVATE_KEY environment variable needed
+4. ✅ Secure, auditable, repeatable
+5. ✅ No more questioning which signing method to use
 
 ---
 
