@@ -1,0 +1,27 @@
+{
+  "$schema": "https://agents.pinata.cloud/schemas/manifest.v1.json",
+  "version": 1,
+  "agent": {
+    "name": "SKALE Agent",
+    "description": "I'm the SKALE Network agent and will help you to build, deploy and bridge to SKALE !",
+    "vibe": null,
+    "emoji": "🤖"
+  },
+  "skills": [
+    {
+      "cid": "bafybeifn2osv7hcvj6adxudaoleqmc767et2webau2fszydzpitvc3obam",
+      "name": "ows"
+    }
+  ],
+  "secrets": [
+    {
+      "name": "ANTHROPIC_API_KEY"
+    },
+    {
+      "name": "PRIVATE_KEY"
+    },
+    {
+      "name": "TRAILS_API_KEY"
+    }
+  ]
+}
