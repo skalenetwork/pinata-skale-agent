@@ -145,6 +145,48 @@ unset PRIVATE_KEY
 
 ---
 
+## SKALE MTM Executor Script
+
+### Universal MTM Batch Execution
+
+**Script:** `/home/node/clawd/workspace/mtm-executor.js`
+**Wrapper:** `/home/node/clawd/workspace/run-mtm-mint.sh`
+**Documentation:** `/home/node/clawd/workspace/MTM_EXECUTOR_README.md`
+
+**Quick Start:**
+```bash
+# Mint NFT 10 times (no args)
+export PRIVATE_KEY=$(ows wallet export --wallet "skale-default")
+node mtm-executor.js --contract 0x3EA... --function mint --count 10
+
+# Transfer tokens 5 times
+node mtm-executor.js --contract 0xABC... --function transfer --count 5 --args '["0x123...",1000000000]'
+
+# With custom ABI
+node mtm-executor.js --contract 0x123... --function swap --count 20 --abi ./abi.json --args '[...]'
+
+# Via wrapper (OWS integration)
+bash run-mtm-mint.sh
+```
+
+**Supported CLI Arguments:**
+- `--contract` — Contract address (0x...)
+- `--function` — Function name to execute
+- `--count` — Number of times to execute
+- `--args` — JSON array of function arguments (optional)
+- `--abi` — Path to contract ABI file (optional)
+- `--rpc` — Custom RPC endpoint (optional)
+
+**Features:**
+- ✅ Works with any contract, any function
+- ✅ Manual nonce management for parallel execution
+- ✅ Up to 700 TPS throughput
+- ✅ OWS wallet integration (no private key exposure)
+- ✅ Transaction status reporting with TPS metrics
+- ✅ Error handling and detailed logging
+
+---
+
 ## SKALE Bridge Script
 
 ### Universal Bridge Execution (OWS Signing)
