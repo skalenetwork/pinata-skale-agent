@@ -38,7 +38,15 @@ If low on testnet, get free CREDIT:
 - **Testnet:** https://faucet.skale.space/
 - **Mainnet:** https://base.skalenodes.com/credits
 
-### 3. Build Contracts
+### 3. Install Dependencies
+
+```bash
+forge install
+```
+
+This fetches the required libraries (forge-std, OpenZeppelin contracts, etc.).
+
+### 4. Build Contracts
 
 ```bash
 forge build
