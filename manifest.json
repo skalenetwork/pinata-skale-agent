@@ -44,7 +44,7 @@
     {
       "name": "TRAILS_API_KEY",
       "description": "Trails api key used for bridging in and out of SKALE Base",
-      "required": true
+      "required": false
     }
   ]
 }
