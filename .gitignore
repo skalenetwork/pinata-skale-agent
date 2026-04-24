@@ -1,10 +1,12 @@
-# Ignore everything except workspace and skills
+# Ignore everything except workspace, skills, and essential project files
 *
 !workspace/
 !workspace/**
 !skills/
 !skills/**
 !.gitignore
+!README.md
+!manifest.json
 
 # Dependencies (re-ignore inside workspace/skills)
 **/node_modules/
