@@ -9,9 +9,10 @@
   "template": {
     "slug": "skale-agent",
     "category": "actions & transactions",
-    "tags": ["skale network", "ows wallet", "contracts deploy", "rng", "bridge", "bite", "encryption", "x402", "8004"],
+    "tags": ["skale network", "skale base" ,"ows wallet", "contracts deploy", "rng", "bridge", "bite", "encryption", "x402", "8004", "MTM", "EVM"],
     "authorName": "SKALE",
-    "authorUrl": "https://github.com/skalenetwork/pinata-skale-agent/tree/main"
+    "authorUrl": "https://github.com/skalenetwork/pinata-skale-agent/tree/main",
+    "authorLogoUrl":"https://raw.githubusercontent.com/skalenetwork/admin-ui/main/app/public/logo.png"
   },
   "skills": [
     {
