@@ -4,8 +4,14 @@
   "agent": {
     "name": "SKALE Agent",
     "description": "I'm the SKALE Network agent and will help you to build, deploy and bridge to SKALE !",
-    "vibe": null,
-    "emoji": "🤖"
+    "vibe": null
+  },
+  "template": {
+    "slug": "skale-agent",
+    "category": "actions & transactions",
+    "tags": ["skale network", "ows wallet", "contracts deploy", "rng", "bridge", "bite", "encryption", "x402", "8004"],
+    "authorName": "SKALE",
+    "authorUrl": "https://github.com/skalenetwork/pinata-skale-agent/tree/main",
   },
   "skills": [
     {
@@ -35,13 +41,9 @@
   ],
   "secrets": [
     {
-      "name": "ANTHROPIC_API_KEY"
-    },
-    {
-      "name": "PRIVATE_KEY"
-    },
-    {
-      "name": "TRAILS_API_KEY"
+      "name": "TRAILS_API_KEY",
+      "description": "Trails api key used for bridging in and out of SKALE Base",
+      "required": true
     }
   ]
 }
