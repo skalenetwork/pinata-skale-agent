@@ -18,14 +18,14 @@ echo "   Wallet: $WALLET"
 echo "   FreeMint: $FREEMINT_ADDRESS"
 echo ""
 
-# Ensure bite-executor.js exists
-if [ ! -f "./bite-executor.js" ]; then
-    echo "❌ bite-executor.js not found in current directory"
+# Ensure bite-executor.js exists in parent directory
+if [ ! -f "../bite-executor.js" ]; then
+    echo "❌ bite-executor.js not found in parent directory"
     exit 1
 fi
 
 # Execute BITE transaction
-OWS_WALLET="$WALLET" node ./bite-executor.js \
+OWS_WALLET="$WALLET" node ../bite-executor.js \
     --contract "$FREEMINT_ADDRESS" \
     --function "mint" \
     --chain "$CHAIN" \

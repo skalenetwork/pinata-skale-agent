@@ -150,7 +150,7 @@ unset PRIVATE_KEY
 ### Universal MTM Batch Execution
 
 **Script:** `/home/node/clawd/workspace/mtm-executor.js`
-**Wrapper:** `/home/node/clawd/workspace/run-mtm-mint.sh`
+**Wrapper:** `/home/node/clawd/workspace/scripts/run-mtm-mint.sh`
 **Documentation:** `/home/node/clawd/workspace/MTM_EXECUTOR_README.md`
 
 **Quick Start:**
@@ -166,7 +166,7 @@ node mtm-executor.js --contract 0xABC... --function transfer --count 5 --args '[
 node mtm-executor.js --contract 0x123... --function swap --count 20 --abi ./abi.json --args '[...]'
 
 # Via wrapper (OWS integration)
-bash run-mtm-mint.sh
+bash scripts/run-mtm-mint.sh
 ```
 
 **Supported CLI Arguments:**

@@ -31,7 +31,7 @@ fi
 
 # Run MTM executor with derived private key
 export PRIVATE_KEY
-node /home/node/clawd/workspace/mtm-executor.js --contract 0x3EA415d43e5ad81E05954193600Cb187B9B96F85 --function mint --count 10
+node ../mtm-executor.js --contract 0x3EA415d43e5ad81E05954193600Cb187B9B96F85 --function mint --count 10
 
 # Cleanup
 unset PRIVATE_KEY

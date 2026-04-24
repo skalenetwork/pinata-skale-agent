@@ -120,9 +120,9 @@ cast call 0x41395943EE2Aab294E214Ea45e6e9323559a7688 "getTotalMinted()" \
    - No duplication — one script, all contracts
 
 2. **`bite-freemint-mint.sh`** — FreeMint mint() wrapper
-   - Location: `/home/node/clawd/workspace/bite-freemint-mint.sh`
+   - Location: `/home/node/clawd/workspace/scripts/bite-freemint-mint.sh`
    - Purpose: Quick reference for FreeMint.mint() via BITE V1
-   - Usage: `bash bite-freemint-mint.sh`
+   - Usage: `bash scripts/bite-freemint-mint.sh`
 
 ### Documentation
 
@@ -258,7 +258,7 @@ node xona-generate.js list-models
 ### Script Details
 - **Name:** `mtm-executor.js`
 - **Location:** `/home/node/clawd/workspace/mtm-executor.js`
-- **Wrapper:** `/home/node/clawd/workspace/run-mtm-mint.sh`
+- **Wrapper:** `/home/node/clawd/workspace/scripts/run-mtm-mint.sh`
 - **Purpose:** Generic script to execute any contract function x times using manual nonce management
 - **Throughput:** Supports up to 700 TPS on SKALE Base (MTM enabled)
 
@@ -274,7 +274,7 @@ node xona-generate.js list-models
 
 ```bash
 # Mint NFT 10 times (no args)
-bash /home/node/clawd/workspace/run-mtm-mint.sh
+bash /home/node/clawd/workspace/scripts/run-mtm-mint.sh
 
 # Generic execution (set PRIVATE_KEY first)
 export PRIVATE_KEY=$(ows wallet export --wallet "skale-default")
